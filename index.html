@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Print Shop Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Amber & Teal -->
+    <!-- Application Structure Plan: The SPA transforms the 15-day linear report into a task-oriented, interactive guide for students. The structure uses three main tabs: 'Project Overview' (for final goals), 'Full Timeline' (for a day-by-day schedule, broken down by week), and 'Deliverable Details' (the key feature: it reorganizes all project tasks by their associated deliverable). This IA was chosen because students are goal-oriented ('What do I need to make?') and also need a clear schedule ('What do I do today?'). The 'Deliverable Details' section directly supports this by synthesizing the linear plan into actionable, topic-based checklists (e.g., all 'Business Plan' tasks in one place), which is more usable than scrubbing a 15-day timeline. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: 5 Final Deliverables -> Goal: Inform -> Viz/Presentation: 5-card grid with icons (Unicode) -> Interaction: None (static) -> Justification: Clear, visual summary of project goals.
+        - Report Info: 15-Day Schedule -> Goal: Organize/Inform -> Viz/Presentation: Tabbed interface (Week 1/2/3) with clickable 'Day' buttons (HTML/JS) -> Interaction: Click tabs to swap weeks, click day to show details in a dedicated div -> Justification: Prevents overwhelming user with 15 days; allows focused exploration of the schedule.
+        - Report Info: All tasks for all deliverables -> Goal: Synthesize/Organize -> Viz/Presentation: Accordion list (HTML/JS) for each of the 5 deliverables -> Interaction: Click to expand/collapse and see a consolidated list of tasks for that item -> Justification: Re-architects linear data into a goal-oriented view, which is the app's primary usability improvement.
+        - Report Info: Business Plan Cost/Price Examples (Day 5/7) -> Goal: Illustrate Concept -> Viz/Presentation: Simple Bar Chart (Chart.js/Canvas) -> Interaction: Hover for tooltips -> Justification: Visually clarifies the abstract concepts of cost analysis and pricing.
+        - CONFIRMATION: NO SVG/Mermaid used. All visuals are HTML/CSS/Tailwind, Unicode, or Chart.js/Canvas. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .nav-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-item.active {
+            border-bottom-color: #0d9488;
+            color: #0f766e;
+        }
+        .week-nav-item.active {
+            background-color: #0d9488;
+            color: #ffffff;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .week-content {
+            display: none;
+        }
+        .week-content.active {
+            display: block;
+        }
+        .day-btn.active {
+            background-color: #ccfbf1;
+            border-color: #0d9488;
+            color: #134e4a;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 250px;
+            max-height: 250px;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-content.open {
+            max-height: 1000px;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-stone-800">
+
+    <main class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-5xl font-bold text-teal-800">The 3D Print Shop Challenge</h1>
+            <p class="text-lg text-stone-600 mt-2">Your 3-week guide to designing and launching a 3D printed product.</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-stone-300 mb-8">
+            <button class="nav-item active text-stone-600 hover:text-teal-700 py-3 px-4 md:px-6 font-semibold border-b-4 border-transparent" data-target="overview">Project Overview</button>
+            <button class="nav-item text-stone-600 hover:text-teal-700 py-3 px-4 md:px-6 font-semibold border-b-4 border-transparent" data-target="timeline">Full Timeline</button>
+            <button class="nav-item text-stone-600 hover:text-teal-700 py-3 px-4 md:px-6 font-semibold border-b-4 border-transparent" data-target="deliverables">Deliverable Details</button>
+        </nav>
+
+        <section id="overview" class="content-section active">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-teal-700 mb-4">Welcome to the Challenge!</h2>
+                <p class="text-stone-700 leading-relaxed">
+                    Over the next three weeks, you will become a designer, engineer, and entrepreneur. Your mission is to design, model, and 3D print a unique product that could be sold. But it's not just about the object—you'll also create a business plan, sketch your concept, design a marketing poster, and write about your process. This page is your interactive guide to every step.
+                </p>
+                
+                <h3 class="text-xl font-bold text-teal-700 mt-8 mb-4">Your 5 Final Deliverables</h3>
+                <p class="text-stone-700 leading-relaxed mb-6">By the end of this project, you will have created a complete product package. These are the five items you'll be submitting on the final day.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-center">
+                    <div class="bg-amber-100 p-4 rounded-lg shadow">
+                        <span class="text-4xl">📦</span>
+                        <h4 class="font-bold text-stone-800 mt-2">3D Printed Object</h4>
+                    </div>
+                    <div class="bg-amber-100 p-4 rounded-lg shadow">
+                        <span class="text-4xl">📐</span>
+                        <h4 class="font-bold text-stone-800 mt-2">Object Sketch</h4>
+                    </div>
+                    <div class="bg-amber-100 p-4 rounded-lg shadow">
+                        <span class="text-4xl">📈</span>
+                        <h4 class="font-bold text-stone-800 mt-2">Business Plan</h4>
+                    </div>
+                    <div class="bg-amber-100 p-4 rounded-lg shadow">
+                        <span class="text-4xl">🎨</span>
+                        <h4 class="font-bold text-stone-800 mt-2">Advertisement Poster</h4>
+                    </div>
+                    <div class="bg-amber-100 p-4 rounded-lg shadow">
+                        <span class="text-4xl">✍️</span>
+                        <h4 class="font-bold text-stone-800 mt-2">Project Write-up</h4>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="timeline" class="content-section">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-teal-700 mb-4">Project Timeline</h2>
+                <p class="text-stone-700 leading-relaxed mb-6">
+                    This is your day-by-day guide. The project is broken into three weeks, each with a specific focus. Select a week to see the daily plan, then click on a day to see its activities, tasks, and deliverables.
+                </p>
+
+                <nav class="flex justify-center bg-stone-100 rounded-lg p-1 mb-6">
+                    <button class="week-nav-item active flex-1 text-stone-600 hover:bg-teal-600 hover:text-white py-2 px-4 font-semibold rounded-md" data-target="week-1">Week 1: Ideation</button>
+                    <button class="week-nav-item flex-1 text-stone-600 hover:bg-teal-600 hover:text-white py-2 px-4 font-semibold rounded-md" data-target="week-2">Week 2: Prototyping</button>
+                    <button class="week-nav-item flex-1 text-stone-600 hover:bg-teal-600 hover:text-white py-2 px-4 font-semibold rounded-md" data-target="week-3">Week 3: Launch</button>
+                </nav>
+
+                <div id="week-1" class="week-content active">
+                    <h3 class="text-xl font-semibold text-teal-800 mb-3">Focus: Ideation, Design & Modeling</h3>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-1" data-week="1">Day 1</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-2" data-week="1">Day 2</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-3" data-week="1">Day 3</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-4" data-week="1">Day 4</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-5" data-week="1">Day 5</button>
+                    </div>
+                    <div id="day-details-1" class="mt-4 p-4 bg-amber-50 rounded-lg shadow-inner min-h-[100px]">
+                        <p class="text-stone-500 text-center pt-4">Click a day above to see the details.</p>
+                    </div>
+                </div>
+
+                <div id="week-2" class="week-content">
+                    <h3 class="text-xl font-semibold text-teal-800 mb-3">Focus: Prototyping, Iteration & Business</h3>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-6" data-week="2">Day 6</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-7" data-week="2">Day 7</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-8" data-week="2">Day 8</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-9" data-week="2">Day 9</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-10" data-week="2">Day 10</button>
+                    </div>
+                    <div id="day-details-2" class="mt-4 p-4 bg-amber-50 rounded-lg shadow-inner min-h-[100px]">
+                        <p class="text-stone-500 text-center pt-4">Click a day above to see the details.</p>
+                    </div>
+                </div>
+                
+                <div id="week-3" class="week-content">
+                    <h3 class="text-xl font-semibold text-teal-800 mb-3">Focus: Final Production & "Market Day"</h3>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-11" data-week="3">Day 11</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-12" data-week="3">Day 12</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-13" data-week="3">Day 13</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-14" data-week="3">Day 14</button>
+                        <button class="day-btn flex-1 min-w-[80px] border-2 border-stone-300 rounded-md p-2 font-semibold text-stone-700 hover:bg-amber-100" data-day="day-15" data-week="3">Day 15</button>
+                    </div>
+                    <div id="day-details-3" class="mt-4 p-4 bg-amber-50 rounded-lg shadow-inner min-h-[100px]">
+                        <p class="text-stone-500 text-center pt-4">Click a day above to see the details.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="deliverables" class="content-section">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-teal-700 mb-4">Deliverable Details & Checklists</h2>
+                <p class="text-stone-700 leading-relaxed mb-6">
+                    This is your project command center. Instead of hunting through the timeline, you can see all the specific tasks required for each of the five final deliverables. Click any item to see a consolidated checklist of what you need to do to complete it.
+                </p>
+                <div class="space-y-4">
+
+                    <div class="border border-stone-300 rounded-lg">
+                        <button class="accordion-toggle w-full flex justify-between items-center text-left p-4 bg-stone-100 hover:bg-stone-200 rounded-t-lg">
+                            <span class="text-xl font-semibold text-teal-800">📦 3D Printed Object</span>
+                            <span class="accordion-icon text-2xl text-teal-700 font-semibold">+</span>
+                        </button>
+                        <div class="accordion-content bg-white p-4 rounded-b-lg border-t border-stone-200">
+                            <h4 class="font-bold text-stone-700 mb-2">Task Checklist:</h4>
+                            <ul class="list-disc list-inside space-y-2 text-stone-700">
+                                <li><span class="font-semibold">[Day 3]</span> Complete basic 3D modeling tutorials.</li>
+                                <li><span class="font-semibold">[Day 3]</span> Build a simple version of your object in the software.</li>
+                                <li><span class="font-semibold">[Day 4]</span> Build your first complete digital prototype ("Version 1") and submit the `.stl` file for a test print.</li>
+                                <li><span class="font-semibold">[Day 6]</span> Review your "Version 1" physical print for flaws and design improvements.</li>
+                                <li><span class="font-semibold">[Day 6]</span> Begin iterating on your digital model to create "Version 2".</li>
+                                <li><span class="font-semibold">[Day 8]</span> Make final design tweaks based on cost and function.</li>
+                                <li><span class="font-semibold">[Day 8]</span> Submit your "Final Version" `.stl` file for the production print.</li>
+                                <li><span class="font-semibold">[Day 11]</span> Do any post-processing on your final print (e.g., removing supports).</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="border border-stone-300 rounded-lg">
+                        <button class="accordion-toggle w-full flex justify-between items-center text-left p-4 bg-stone-100 hover:bg-stone-200 rounded-t-lg">
+                            <span class="text-xl font-semibold text-teal-800">📐 Object Sketch</span>
+                            <span class="accordion-icon text-2xl text-teal-700 font-semibold">+</span>
+                        </button>
+                        <div class="accordion-content bg-white p-4 rounded-b-lg border-t border-stone-200">
+                            <h4 class="font-bold text-stone-700 mb-2">Task Checklist:</h4>
+                            <ul class="list-disc list-inside space-y-2 text-stone-700">
+                                <li><span class="font-semibold">[Day 2]</span> Perform simple market research on your product idea.</li>
+                                <li><span class="font-semibold">[Day 2]</span> Create a detailed, labeled **Object Sketch** showing multiple angles (top, side, front) and approximate dimensions.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-stone-300 rounded-lg">
+                        <button class="accordion-toggle w-full flex justify-between items-center text-left p-4 bg-stone-100 hover:bg-stone-200 rounded-t-lg">
+                            <span class="text-xl font-semibold text-teal-800">📈 Business Plan</span>
+                            <span class="accordion-icon text-2xl text-teal-700 font-semibold">+</span>
+                        </button>
+                        <div class="accordion-content bg-white p-4 rounded-b-lg border-t border-stone-200">
+                            <h4 class="font-bold text-stone-700 mb-2">Example Cost vs. Price Breakdown:</h4>
+                            <p class="text-stone-700 text-sm mb-4">Your business plan needs to show you've calculated your costs and set a reasonable price. This chart shows an example based on the Day 5 & 7 tasks.</p>
+                            <div class="chart-container mb-6">
+                                <canvas id="businessPlanChart"></canvas>
+                            </div>
+                            <h4 class="font-bold text-stone-700 mb-2">Task Checklist:</h4>
+                            <ul class="list-disc list-inside space-y-2 text-stone-700">
+                                <li><span class="font-semibold">[Day 5]</span> Use the slicer software to find your object's material usage (in grams) and print time.</li>
+                                <li><span class="font-semibold">[Day 5]</span> Begin your **Business Plan** document and complete **Part 1: Cost Analysis** (Filament Cost + Printer Time = Total Cost).</li>
+                                <li><span class="font-semibold">[Day 7]</span> Complete **Part 2: Target Market** (Who is your customer?).</li>
+                                <li><span class="font-semibold">[Day 7]</span> Complete **Part 3: Pricing Strategy** (Determine and justify your selling price).</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="border border-stone-300 rounded-lg">
+                        <button class="accordion-toggle w-full flex justify-between items-center text-left p-4 bg-stone-100 hover:bg-stone-200 rounded-t-lg">
+                            <span class="text-xl font-semibold text-teal-800">🎨 Advertisement Poster</span>
+                            <span class="accordion-icon text-2xl text-teal-700 font-semibold">+</span>
+                        </button>
+                        <div class="accordion-content bg-white p-4 rounded-b-lg border-t border-stone-200">
+                            <h4 class="font-bold text-stone-700 mb-2">Task Checklist:</h4>
+                            <ul class="list-disc list-inside space-y-2 text-stone-700">
+                                <li><span class="font-semibold">[Day 9]</span> Begin designing your **Advertisement Poster** (e.g., using Canva, Google Slides).</li>
+                                <li><span class="font-semibold">[Day 10]</span> Finalize and complete your poster.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="border border-stone-300 rounded-lg">
+                        <button class="accordion-toggle w-full flex justify-between items-center text-left p-4 bg-stone-100 hover:bg-stone-200 rounded-t-lg">
+                            <span class="text-xl font-semibold text-teal-800">✍️ Project Write-up</span>
+                            <span class="accordion-icon text-2xl text-teal-700 font-semibold">+</span>
+                        </button>
+                        <div class="accordion-content bg-white p-4 rounded-b-lg border-t border-stone-200">
+                            <h4 class="font-bold text-stone-700 mb-2">Task Checklist:</h4>
+                            <ul class="list-disc list-inside space-y-2 text-stone-700">
+                                <li><span class="font-semibold">[Day 10]</span> Begin your final **Project Write-up** by answering the four reflection questions.</li>
+                                <li><span class="font-semibold">[Day 11]</span> Review and finalize your write-up.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center p-4 mt-8 text-stone-500 text-sm">
+        An interactive guide for the 3D Print Shop Challenge.
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const dayDetails = {
+                'day-1': {
+                    title: 'Day 1: Introduction & Brainstorming',
+                    activity: 'Introduce the "3D Print Shop Challenge." The goal is to create a *small, useful, and marketable* 3D printed object.',
+                    discussion: 'What makes a good product? Who is our customer? (e.g., other students, teachers, parents).',
+                    task: 'In small groups or individually, students brainstorm 3-5 product ideas.',
+                    deliverable: 'A list of potential product ideas.'
+                },
+                'day-2': {
+                    title: 'Day 2: Market Research & Sketching',
+                    activity: 'Students select their top idea. They perform simple market research: "Does something like this already exist?" "What problem does my product solve?"',
+                    task: 'Create a detailed, labeled **Object Sketch** of the chosen product. It should show multiple angles (top, side, front) and list approximate dimensions.',
+                    deliverable: 'Completed Object Sketch.'
+                },
+                'day-3': {
+                    title: 'Day 3: Intro to 3D Modeling (e.g., Tinkercad)',
+                    activity: 'Software tutorial. If students are new to 3D modeling, start with the basics: creating and grouping shapes, using the workplane, and accurate dimensioning.',
+                    task: 'Students complete the basic tutorials and then attempt to build a simple version of their object.',
+                    deliverable: 'A basic `.stl` or software file of their initial concept.'
+                },
+                'day-4': {
+                    title: 'Day 4: Modeling - First Prototype',
+                    activity: 'Focused work time. Students build their first complete digital prototype.',
+                    task: 'Remind students of 3D printing constraints (e.g., overhangs, print time, strength). The goal is to have a "Version 1" model ready to print by the end of class.',
+                    deliverable: '"Version 1" `.stl` file, ready for the slicer.'
+                },
+                'day-5': {
+                    title: 'Day 5: Slicing & Business Plan Intro',
+                    activity: 'Introduce the "slicer" software. Show students how it translates their model into print time and material usage (in grams). This is *critical* for their business plan.',
+                    task: 'Students begin their **Business Plan** document. **Part 1: Cost Analysis.** Calculate the cost to produce *one* unit (Filament Cost + Printer Time = Total Cost).',
+                    deliverable: 'Business Plan document started with a cost analysis.'
+                },
+                'day-6': {
+                    title: 'Day 6: Review First Prints & Iterate',
+                    activity: 'Students review their "Version 1" physical prints.',
+                    discussion: 'What worked? What failed? Is it too big/small? Is it strong enough? Does it *feel* like a good product?',
+                    task: 'Students begin iterating on their digital model ("Version 2") based on their physical prototype.',
+                    deliverable: 'Notes on "Version 1" and a "Version 2" model in progress.'
+                },
+                'day-7': {
+                    title: 'Day 7: Business Plan - Price & Market',
+                    activity: 'Continue the **Business Plan**.',
+                    task: 'Students complete the remaining sections: **Part 2: Target Market** (Who is buying this?) and **Part 3: Pricing Strategy** (Determine a *selling price* and justify it).',
+                    deliverable: 'Completed Business Plan.'
+                },
+                'day-8': {
+                    title: 'Day 8: Finalizing 3D Model',
+                    activity: 'Students make final design tweaks. Does the business plan require a change? (e.g., "My cost is too high, I need to make it smaller").',
+                    task: 'Finalize the 3D model ("Final Version").',
+                    deliverable: 'The *final* `.stl` file is submitted for the "production" print.'
+                },
+                'day-9': {
+                    title: 'Day 9: Intro to Marketing & Poster Design',
+                    activity: 'What makes a good advertisement? Show examples of simple, effective posters (strong image, clear title, a benefit, a price).',
+                    task: 'Students begin designing their **Advertisement Poster** (using Canva, Google Slides, or paper).',
+                    deliverable: 'Poster concept or draft.'
+                },
+                'day-10': {
+                    title: 'Day 10: Poster Work & Write-up',
+                    activity: 'Focused work time.',
+                    task: 'Task 1: Finalize their **Advertisement Poster**. Task 2: Begin their final **Project Write-up** (answering the 4 reflection questions).',
+                    deliverable: 'Completed Poster and first draft of Write-up.'
+                },
+                'day-11': {
+                    title: 'Day 11: Final Prints & Project Assembly',
+                    activity: 'All final prints should be complete and returned to students.',
+                    task: 'Students do any post-processing (removing supports, light sanding if needed). They assemble all five deliverables into a final folder or portfolio.',
+                    deliverable: 'All 5 project components are 100% complete.'
+                },
+                'day-12': {
+                    title: 'Day 12: Presentation Prep',
+                    activity: 'Prepare for "Market Day." Students will set up their desk like a trade show booth.',
+                    task: 'Students practice their "elevator pitch" (a 30-second summary of their product, its benefits, and its price).',
+                    deliverable: 'A ready-to-go presentation setup.'
+                },
+                'day-13': {
+                    title: 'Day 13: "Market Day" - Part 1',
+                    activity: 'Half of the class sets up their "booth" (product and poster displayed). The other half acts as "customers," walking around, asking questions, and giving feedback.',
+                    task: 'Presenters practice their pitch and answer questions. "Customers" must visit at least 5 booths.',
+                    deliverable: 'Feedback from peers.'
+                },
+                'day-14': {
+                    title: 'Day 14: "Market Day" - Part 2',
+                    activity: 'Students swap roles. The "customers" from yesterday are now the "presenters."',
+                    task: 'Present and "shop" as before.',
+                    deliverable: 'Feedback from peers.'
+                },
+                'day-15': {
+                    title: 'Day 15: Final Reflection & Submission',
+                    activity: 'Class discussion. What was the "best-selling" product and why? What did you learn about design? What did you learn about business?',
+                    task: 'Students submit their complete project package (all 5 deliverables).',
+                    deliverable: 'Final project submitted.'
+                }
+            };
+
+            const mainNavItems = document.querySelectorAll('.nav-item');
+            const contentSections = document.querySelectorAll('.content-section');
+            
+            mainNavItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    mainNavItems.forEach(i => i.classList.remove('active'));
+                    contentSections.forEach(s => s.classList.remove('active'));
+                    
+                    item.classList.add('active');
+                    document.getElementById(item.dataset.target).classList.add('active');
+                });
+            });
+
+            const weekNavItems = document.querySelectorAll('.week-nav-item');
+            const weekContents = document.querySelectorAll('.week-content');
+
+            weekNavItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    weekNavItems.forEach(i => i.classList.remove('active'));
+                    weekContents.forEach(s => s.classList.remove('active'));
+                    
+                    item.classList.add('active');
+                    document.getElementById(item.dataset.target).classList.add('active');
+                });
+            });
+
+            const dayButtons = document.querySelectorAll('.day-btn');
+            dayButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const week = button.dataset.week;
+                    const dayId = button.dataset.day;
+                    const details = dayDetails[dayId];
+                    const detailContainer = document.getElementById(`day-details-${week}`);
+
+                    document.querySelectorAll(`.week-content[id="week-${week}"] .day-btn`).forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    let html = `<h4 class="font-bold text-lg text-teal-800 mb-2">${details.title}</h4>`;
+                    if (details.activity) html += `<p class="mb-2"><strong class="text-stone-700">Activity:</strong> ${details.activity}</p>`;
+                    if (details.discussion) html += `<p class="mb-2"><strong class="text-stone-700">Discussion:</strong> ${details.discussion}</p>`;
+                    if (details.task) html += `<p class="mb-2"><strong class="text-stone-700">Task:</strong> ${details.task}</p>`;
+                    if (details.deliverable) html += `<p class="font-semibold text-teal-700"><strong class="text-stone-700">Deliverable:</strong> ${details.deliverable}</p>`;
+                    
+                    detailContainer.innerHTML = html;
+                });
+            });
+
+            const accordionToggles = document.querySelectorAll('.accordion-toggle');
+            accordionToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const content = toggle.nextElementSibling;
+                    const icon = toggle.querySelector('.accordion-icon');
+                    
+                    if (content.classList.contains('open')) {
+                        content.classList.remove('open');
+                        icon.textContent = '+';
+                    } else {
+                        content.classList.add('open');
+                        icon.textContent = '−';
+                    }
+                });
+            });
+
+            if (document.getElementById('businessPlanChart')) {
+                const ctx = document.getElementById('businessPlanChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Filament Cost', 'Labor/Time Cost', 'Total Cost', 'Sale Price'],
+                        datasets: [{
+                            label: 'Example Cost & Price ($)',
+                            data: [0.30, 0.50, 0.80, 2.50],
+                            backgroundColor: [
+                                '#fdba74',
+                                '#fcd34d',
+                                '#fb923c',
+                                '#0d9488' 
+                            ],
+                            borderColor: [
+                                '#f97316',
+                                '#f59e0b',
+                                '#ea580c',
+                                '#0f766e'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        return '$' + value.toFixed(2);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
